@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X, Phone, Car, PenTool as Tools, ShoppingBag, MessageSquare, ChevronLeft, ChevronRight, X as Close, Search, Star, TrendingUp, Tag, Award, Filter, ChevronDown, Calendar, Sliders } from 'lucide-react';
+import { Menu, X, Phone, Car, PenTool as Tools, ShoppingBag, MessageSquare, ChevronLeft, ChevronRight, X as Close, Search, Star, TrendingUp, Tag, Award, Filter, ChevronDown, Calendar, Sliders, Store, Heart } from 'lucide-react';
 
 // Cart type definitions
 interface CartItem {
@@ -20,7 +20,7 @@ interface VehiclePart {
   images: string[];
   awards: string[];
   condition: string;
-  category: string; // Added category property
+  category: string;
   specifications: {
     material: string;
     compatibility: string[];
@@ -50,6 +50,7 @@ function App() {
   const [isCartOpen, setIsCartOpen] = React.useState(false);
   const [showNotification, setShowNotification] = React.useState(false);
   const [lastAddedItem, setLastAddedItem] = React.useState<CartItem | null>(null);
+  const [savedItems, setSavedItems] = React.useState<Set<string>>(new Set());
   
   // Enhanced search state
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -62,7 +63,7 @@ function App() {
   const [selectedModel, setSelectedModel] = React.useState<string>('');
   const [selectedYear, setSelectedYear] = React.useState<string>('');
   const [selectedCategory, setSelectedCategory] = React.useState<string>('');
-  const [selectedCondition, setSelectedCondition] = React.useState<string>(''); // Added condition state
+  const [selectedCondition, setSelectedCondition] = React.useState<string>('');
   const [priceRange, setPriceRange] = React.useState<[number, number]>([0, 500000]);
   const [sortOption, setSortOption] = React.useState<string>('relevance');
   
@@ -148,7 +149,7 @@ function App() {
   const specialOffers = [
     {
       id: 1,
-      title: "Summer Sale",
+      title: "Flash Sales",
       discount: "25% OFF",
       description: "On all brake systems",
       endDate: "Limited time offer",
@@ -164,7 +165,7 @@ function App() {
     }
   ];
 
-  // Vehicle parts data with category added
+  // Vehicle parts data
   const vehicleParts: VehiclePart[] = [
     {
       id: "1",
@@ -185,7 +186,7 @@ function App() {
         "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?auto=format&fit=crop&q=80"
       ],
       condition: "New",
-      category: "Electrical", // Added category
+      category: "Electrical",
       awards: [
         "2023 Best Aftermarket Part - AutoParts Nigeria",
         "Quality Excellence Award - Lagos Auto Show"
@@ -214,7 +215,7 @@ function App() {
         "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80"
       ],
       condition: "New",
-      category: "Brake System", // Added category
+      category: "Brake System",
       awards: [
         "Best Safety Product 2023 - Nigeria Auto Parts Association",
         "Consumer Choice Award - Auto Care Excellence"
@@ -243,7 +244,7 @@ function App() {
         "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&q=80"
       ],
       condition: "Refurbished",
-      category: "Engine Parts", // Added category
+      category: "Engine Parts",
       awards: [
         "Environmental Choice Award 2023",
         "Innovation in Filtration - Auto Parts Expo Lagos"
@@ -272,7 +273,7 @@ function App() {
         "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80"
       ],
       condition: "Used",
-      category: "Fuel System", // Added category
+      category: "Fuel System",
       awards: [
         "Reliability Award 2023 - Auto Parts Nigeria",
         "Best Fuel System Component - Lagos Automotive Week"
@@ -301,7 +302,7 @@ function App() {
         "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?auto=format&fit=crop&q=80"
       ],
       condition: "New",
-      category: "Suspension", // Added category
+      category: "Suspension",
       awards: [
         "Off-Road Excellence Award 2023",
         "Premium Aftermarket Component - Nigeria Auto Show"
@@ -318,10 +319,8 @@ function App() {
   const handleSearch = () => {
     setIsSearching(true);
     
-    // Simulate search with filters (would connect to Firebase in real implementation)
     let results = [...vehicleParts];
     
-    // Filter by search query (part name or description)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       results = results.filter(part => 
@@ -330,7 +329,6 @@ function App() {
       );
     }
     
-    // Filter by make and model
     if (selectedMake) {
       results = results.filter(part => {
         const makeModelPattern = new RegExp(selectedMake, 'i');
@@ -347,11 +345,9 @@ function App() {
       }
     }
     
-    // Filter by year
     if (selectedYear) {
       results = results.filter(part => {
         return part.specifications.compatibility.some(comp => {
-          // Check if the compatibility string contains a year range that includes the selected year
           const yearRanges = comp.match(/\d{4}-\d{4}/g);
           if (yearRanges) {
             return yearRanges.some(range => {
@@ -359,28 +355,23 @@ function App() {
               return Number(selectedYear) >= start && Number(selectedYear) <= end;
             });
           }
-          // Check if the compatibility string contains the exact year
           return comp.includes(selectedYear);
         });
       });
     }
     
-    // Filter by category - UPDATED to use the category property
     if (selectedCategory) {
       results = results.filter(part => part.category === selectedCategory);
     }
     
-    // Filter by condition
     if (selectedCondition) {
       results = results.filter(part => part.condition === selectedCondition);
     }
     
-    // Filter by price range
     results = results.filter(part => 
       part.price >= priceRange[0] && part.price <= priceRange[1]
     );
     
-    // Sort results
     switch (sortOption) {
       case 'price-low':
         results.sort((a, b) => a.price - b.price);
@@ -391,12 +382,10 @@ function App() {
       case 'name':
         results.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      // Default is relevance, which is the order they come from the database
     }
     
     setSearchResults(results);
     
-    // Simulate delay for search
     setTimeout(() => {
       setIsSearching(false);
     }, 500);
@@ -477,6 +466,46 @@ function App() {
     );
   };
 
+  // Update the quantity selector in the product detail view
+  const updateDetailQuantity = (partId: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    
+    const existingItem = cart.find(item => item.id === partId);
+    if (existingItem) {
+      setCart(prev =>
+        prev.map(item =>
+          item.id === partId
+            ? { ...item, quantity: newQuantity }
+            : item
+        )
+      );
+    } else {
+      const part = vehicleParts.find(p => p.id === partId);
+      if (part) {
+        setCart(prev => [...prev, {
+          id: part.id,
+          name: part.name,
+          price: part.price,
+          quantity: newQuantity,
+          image: part.images[0]
+        }]);
+      }
+    }
+  };
+
+  // Toggle save for later
+  const toggleSaveForLater = (partId: string) => {
+    setSavedItems(prev => {
+      const newSaved = new Set(prev);
+      if (newSaved.has(partId)) {
+        newSaved.delete(partId);
+      } else {
+        newSaved.add(partId);
+      }
+      return newSaved;
+    });
+  };
+
   const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   // Get condition badge color
@@ -497,7 +526,6 @@ function App() {
   const handlePartClick = (part: VehiclePart) => {
     setSelectedPart(part);
     setShowPartDetail(true);
-    // Scroll to top when opening detail view
     window.scrollTo(0, 0);
   };
 
@@ -563,8 +591,8 @@ function App() {
       {/* Part Detail View */}
       {showPartDetail && selectedPart && (
         <div className="pt-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="mb-6 flex items-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+            <div className="mb-1 sm:mb-6 flex items-center">
               <button 
                 onClick={closePartDetail}
                 className="flex items-center text-blue-600 hover:text-blue-800 transition"
@@ -574,7 +602,7 @@ function App() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-8">
               {/* Image Gallery */}
               <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div className="relative h-96">
@@ -628,6 +656,82 @@ function App() {
                 
                 <p className="text-3xl font-bold text-blue-600 mb-6">₦{selectedPart.price.toLocaleString()}</p>
                 
+                {/* Quantity Selector */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Quantity:
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      className="w-8 h-8 flex items -center justify-center border border-gray-300 rounded-md hover:bg-gray-50"
+                      onClick={() => {
+                        const currentQty = cart.find(item => item.id === selectedPart.id)?.quantity || 1;
+                        if (currentQty > 1) {
+                          updateDetailQuantity(selectedPart.id, currentQty - 1);
+                        }
+                      }}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min="1"
+                      value={cart.find(item => item.id === selectedPart.id)?.quantity || 1}
+                      onChange={(e) => {
+                        const qty = parseInt(e.target.value);
+                        if (qty >= 1) {
+                          updateDetailQuantity(selectedPart.id, qty);
+                        }
+                      }}
+                      className="w-16 text-center border border-gray-300 rounded-md"
+                    />
+                    <button
+                      className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-md hover:bg-gray-50"
+                      onClick={() => {
+                        const currentQty = cart.find(item => item.id === selectedPart.id)?.quantity || 1;
+                        updateDetailQuantity(selectedPart.id, currentQty + 1);
+                      }}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bulk Purchase Call */}
+                <div className="mb-6 bg-pink-50 p-4 rounded-lg">
+                  <p className="text-gray-900 font-medium">Call us for Bulk Purchases:</p>
+                  <a href="tel:08138900104" className="text-blue-600 text-lg font-semibold hover:text-blue-800">
+                    08138900104
+                  </a>
+                </div>
+
+                {/* Add to Cart and Save Buttons */}
+                <div className="flex items-center space-x-4 mb-6">
+                  <button
+                    onClick={() => addToCart(selectedPart)}
+                    className="flex-1 bg-[#37BD6B] text-white px-6 py-3 rounded-lg hover:bg-[#2ea35d] transition flex items-center justify-center space-x-2"
+                  >
+                    <ShoppingBag className="h-5 w-5" />
+                    <span>Add To Cart</span>
+                  </button>
+                  <button
+                    onClick={() => toggleSaveForLater(selectedPart.id)}
+                    className={`p-3 border rounded-lg transition ${
+                      savedItems.has(selectedPart.id)
+                        ? 'border-blue-500 bg-blue-500 text-white hover:bg-blue-600 hover:border-blue-600'
+                        : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Heart className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {/* Pickup Information */}
+                <div className="mb-6 flex items-center space-x-3 text-gray-700">
+                  <Store className="h-5 w-5" />
+                  <span>Pickup & Pay on Collection Available</span>
+                </div>
+
                 <div className="mb-6">
                   <p className="text-gray-700">{selectedPart.description}</p>
                 </div>
@@ -661,7 +765,6 @@ function App() {
                     <p className="text-gray-700">
                       <span className="font-medium">Condition:</span> <span className={`inline-block ${selectedPart.condition === 'New' ? 'text-green-600' : selectedPart.condition === 'Used' ? 'text-amber-600' : 'text-blue-600'} font-medium`}>{selectedPart.condition}</span>
                     </p>
-                    {/* Display category in detail view */}
                     <p className="text-gray-700">
                       <span className="font-medium">Category:</span> {selectedPart.category}
                     </p>
@@ -685,16 +788,6 @@ function App() {
                     </ul>
                   </div>
                 )}
-
-                <div className="mt-8">
-                  <button
-                    onClick={() => addToCart(selectedPart)}
-                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition flex items-center justify-center space-x-2"
-                  >
-                    <ShoppingBag className="h-5 w-5" />
-                    <span>Add to Cart</span>
-                  </button>
-                </div>
               </div>
             </div>
           </div>
@@ -824,7 +917,7 @@ function App() {
                           value={selectedMake}
                           onChange={(e) => {
                             setSelectedMake(e.target.value);
-                            setSelectedModel(''); // Reset model when make changes
+                            setSelectedModel('');
                           }}
                           className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                         >
@@ -944,7 +1037,7 @@ function App() {
                           id="sort"
                           value={sortOption}
                           onChange={(e) => setSortOption(e.target.value)}
-                          className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus: outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                          className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                         >
                           <option value="relevance">Relevance</option>
                           <option value="price-low">Price: Low to High</option>
@@ -1054,56 +1147,41 @@ function App() {
                                     {part.condition}
                                   </span>
                                 </div>
+                                {/* Category Badge */}
+                                <div className="absolute top-3 left-3">
+                                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium shadow-sm">
+                                    {part.category}
+                                  </span>
+                                </div>
                               </div>
-
-                              <div className="p-6 flex-1 flex flex-col">
-                                <div className="flex justify-between items-start mb-2">
-                                  <h3 className="text-xl font-semibold text-gray-900">{part.name}</h3>
-                                </div>
-                                <p className="text-2xl font-bold text-blue-600 mb-4">₦{part.price.toLocaleString()}</p>
+                              
+                              {/* Content */}
+                              <div className="p-5 flex flex-col flex-grow">
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">{part.name}</h3>
+                                <p className="text-2xl font-bold text-blue-600 mb-3">₦{part.price.toLocaleString()}</p>
+                                <p className="text-gray-600 mb-4 line-clamp-2">{part.description}</p>
                                 
-                                <p className="text-gray-600 mb-4">{part.description}</p>
+                                {/* This spacer pushes the buttons to the bottom */}
+                                <div className="flex-grow"></div>
                                 
-                                <div className="mb-4">
-                                  <h4 className="font-semibold text-gray-900 mb-2">Key Features:</h4>
-                                  <ul className="list-disc list-inside text-gray-600">
-                                    {part.features.slice(0, 3).map((feature, index) => (
-                                      <li key={index}>{feature}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-
-                                <div className="mb-4">
-                                  <h4 className="font-semibold text-gray-900 mb-2">Specifications:</h4>
-                                  <p className="text-gray-600">
-                                    <strong>Compatibility:</strong> {part.specifications.compatibility[0]}
-                                  </p>
-                                  <p className="text-gray-600">
-                                    <strong>Warranty:</strong> {part.specifications.warranty}
-                                  </p>
-                                  <p className="text-gray-600">
-                                    <strong>Condition:</strong> <span className={`inline-block ${part.condition === 'New' ? 'text-green-600' : part.condition === 'Used' ? 'text-amber-600' : 'text-blue-600'} font-medium`}>{part.condition}</span>
-                                  </p>
-                                  {/* Display category in card */}
-                                  <p className="text-gray-600">
-                                    <strong>Category:</strong> {part.category}
-                                  </p>
-                                </div>
-
-                                {/* This div will push the certification and button to the bottom */}
-                                <div className="mt-auto">
-                                  <div className="flex items-center justify-between space-x-4">
-                                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded text-sm whitespace-nowrap">
-                                      {part.certification}
-                                    </span>
-                                    <button
-                                      onClick={() => addToCart(part)}
-                                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2 whitespace-nowrap"
-                                    >
-                                      <ShoppingBag className="h-5 w-5" />
-                                      <span>Add to Cart</span>
-                                    </button>
-                                  </div>
+                                {/* Action buttons - now at the bottom of each card */}
+                                <div className="flex justify-between items-center mt-4">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      addToCart(part);
+                                    }}
+                                    className="bg-[#37BD6B] text-white px-4 py-2 rounded-lg hover:bg-[#2ea35d] transition flex items-center space-x-2"
+                                  >
+                                    <ShoppingBag className="h-5 w-5" />
+                                    <span>Add to Cart</span>
+                                  </button>
+                                  <button
+                                    onClick={() => handlePartClick(part)}
+                                    className="text-sm text-blue-600 hover:text-blue-800 transition"
+                                  >
+                                    View Details
+                                  </button>
                                 </div>
                               </div>
                             </div>
@@ -1186,7 +1264,7 @@ function App() {
                         className="bg-white rounded-lg shadow p-4 hover:shadow-md transition flex flex-col items-center text-center"
                       >
                         <Car className="h-8 w-8 text-blue-600 mb-2" />
-                        <span className="font-medium text-gray-900">Audi</span>
+                        <span className="font-medium text- gray-900">Audi</span>
                         <span className="text-sm text-gray-600">A4</span>
                       </button>
                       
@@ -1219,8 +1297,7 @@ function App() {
                   "Honda Accord Air Filter", 
                   "Toyota Camry Oil Filter", 
                   "Mercedes-Benz G-Class Suspension", 
-                  "Lexus RX350 Spark Plugs",
-                  "Toyota Hilux Clutch Kit", 
+                  "Lexus RX350 Spark Plugs", "Toyota Hilux Clutch Kit", 
                   "BMW 3 Series Brake Discs", 
                   "Toyota RAV4 Alternator", 
                   "Honda Civic Timing Belt"
@@ -1240,7 +1317,7 @@ function App() {
             </div>
           </section>
 
-          {/* Featured Parts Section - UPDATED with fixed button alignment */}
+          {/* Featured Parts Section */}
           <section className="py-12 bg-gray-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-8">Featured Parts</h2>
@@ -1286,10 +1363,10 @@ function App() {
                       <div className="flex justify-between items-center mt-4">
                         <button
                           onClick={(e) => {
-                            e.stopPropagation(); // Prevent triggering the parent onClick
+                            e.stopPropagation();
                             addToCart(part);
                           }}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2"
+                          className="bg-[#37BD6B] text-white px-4 py-2 rounded-lg hover:bg-[#2ea35d] transition flex items-center space-x-2"
                         >
                           <ShoppingBag className="h-5 w-5" />
                           <span>Add to Cart</span>
@@ -1457,7 +1534,7 @@ function App() {
               <span>₦{totalAmount.toLocaleString()}</span>
             </div>
             <button
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
+              className="w-full bg-[#37BD6B] text-white py-3 rounded-lg hover:bg-[#2ea35d] transition"
               onClick={() => alert('Proceeding to checkout...')}
             >
               Proceed to Checkout
@@ -1515,7 +1592,7 @@ function App() {
       {/* Cart Button */}
       <button
         onClick={() => setIsCartOpen(true)}
-        className="fixed bottom-6 left-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-50 group"
+        className="fixed bottom-6 left-6 bg-[#37BD6B] text-white p-4 rounded-full shadow-lg hover:bg-[#2ea35d] transition-colors z-50 group"
       >
         <ShoppingBag className="h-6 w-6 group-hover:scale-110 transition-transform" />
         {cart.length > 0 && (
